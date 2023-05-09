@@ -5,6 +5,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const MongoClient = require('mongodb').MongoClient;
 //method-override => html 에서 put 과 delete 사용가능케 해줌
 const methodOverride = require('method-override')
+require('dotenv').config()
+
 app.use(methodOverride('_method'))
 //ejs 파일 사용
 app.set('view engine', 'ejs');
@@ -13,20 +15,27 @@ app.set('view engine', 'ejs');
 app.use('/public', express.static('public'));
 
 
+
+// var db;
+// MongoClient.connect('mongodb+srv://root:root@clusterapril.s1x2azi.mongodb.net/?retryWrites=true&w=majority', function (error, client) {
+//     if (error) return console.log(error)
+
+//     db = client.db('todoapp')
+
+//     app.listen(8080, function () {
+//         console.log('listening on 8080')
+//     });
+// })
+
+//.env
 var db;
-MongoClient.connect('mongodb+srv://root:root@clusterapril.s1x2azi.mongodb.net/?retryWrites=true&w=majority', function (error, client) {
-    if (error) return console.log(error)
-
-    db = client.db('todoapp')
-
-    // db.collection('post').insertOne({name: 'Ian Hwang', age : 30, _id : 100}, function(error, res){
-    //     console.log('save success')
-    // });
-
-    app.listen(8080, function () {
+MongoClient.connect(process.env.DB_URL, function (err, client) {
+    if (err) return console.log(err)
+    db = client.db('todoapp');
+    app.listen(process.env.PORT, function () {
         console.log('listening on 8080')
-    });
-})
+    })
+}) 
 
 app.get('/pet', (req, res) => {
     res.send('Hi this is pets')
@@ -168,21 +177,54 @@ app.post('/login', passport.authenticate('local', {
     res.redirect('/')
 })
 
+//mypage
+app.get('/mypage', checkLogin, function(req, res){
+    console.log(req.user)
+    res.render('mypage.ejs', {user: req.user })
+})
+
+function checkLogin(req, res, next) {
+    if(req.user) {
+        next()
+    } else {
+        res.send('User did not log in')
+    }
+}
+
+
+
 passport.use(new LocalStrategy({
     usernameField: 'id',
     passwordField: 'pw',
     session: true,
-    passReqToCallback: false,
-}, function (입력한아이디, 입력한비번, done) {
-    //console.log(입력한아이디, 입력한비번);
-    db.collection('login').findOne({ id: 입력한아이디 }, function (에러, 결과) {
-        if (에러) return done(에러)
-
-        if (!결과) return done(null, false, { message: '존재하지않는 아이디요' })
-        if (입력한비번 == 결과.pw) {
-            return done(null, 결과)
+        passReqToCallback: false,
+    }, function (입력한아이디, 입력한비번, done) {
+    console.log(입력한아이디, 입력한비번);
+    db.collection('login').findOne({ id: 입력한아이디 }, function (error, result) {
+        if (error) return done(error)
+        //id/pw 맞는지 DB와 비교
+        //pw를 암호화 시켜야함 현재는 보안이 취약
+        if (!result) return done(null, false, { message: 'ID does not exist' })
+        if (입력한비번 == result.pw) {
+            return done(null, result)
         } else {
-            return done(null, false, { message: '비번틀렸어요' })
+            return done(null, false, { message: 'Wrong Password' })
         }
     })
 }));
+
+
+//Session 만들기
+//session을 저장시키는 코드(로그인 성공시 발동)
+passport.serializeUser(function(user, done){
+    done(null, user.id)
+});
+
+//my page 접속시 발동; 이 세션 데이터를 가진 사람을 db에서 찾아주세요
+passport.deserializeUser(function(아이디, done){
+    db.collection('login').findOne({id: 아이디}, function(error, result){
+    done(null, result)
+    })
+});
+
+
