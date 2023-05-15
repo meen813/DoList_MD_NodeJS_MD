@@ -19,7 +19,7 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <%- include('nav.html') %>
 
-        <h4 class="ml-2 my=3 text-center">To DO List</h4>
+        <h4 class="ml-2 my=3 text-center">Search Results</h4>
 
         <!-- GET 요청시 query string 으로 정보전달하기 -->
         <div class="container input-group mb-2">
@@ -32,6 +32,14 @@
             var searchInput = $('#search-input').val()// 유저가 <input>에 입력한 값
             window.location.replace('/search?value=' + searchInput)
             })
+
+
+            //자바스크립트로 query string 만들때 이런거 쓰면 쉬움
+            var 자료 = {이름 : '값', 이름2: '값2'};
+            $.param(자료)
+
+            $(폼태그).serialize()
+
         </script>
 
         <div class="container">
