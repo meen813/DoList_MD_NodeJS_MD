@@ -230,9 +230,18 @@ passport.deserializeUser(function(아이디, done){
 
 //Server에서 query string 꺼내는 법
 app.get('/search', (req, res) => {
-    console.log(req.query.value)
-    //text index 만들어 두면 1.빠른 검색 2. or 검색 가능 3. -제외가능 4. "정확히 일치하는 것", but 한,일,중어에는 잼병
-    db.collection('post').find( {$text: {$search: req.query.value }}).toArray((error, result)=>{
+    var 검색조건 = [
+        {
+            $search: {
+                index: 'titleSearch',
+                text: {
+                    query: req.query.value,
+                    path: ['title', 'date']  // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
+                }
+            }
+        }
+    ]
+    db.collection('post').aggregate(검색조건).toArray((error, result)=>{
         console.log(result);
         res.render('searchResult.ejs', {posts: result })
         
