@@ -284,8 +284,22 @@ app.use('/shop', require('./routes/shop.js'))
 app.use('/board/sub', checkLogin, require('./routes/board.js'))
 
 
+//multer를 이용한 이미지 하드에 저장하기
+let multer = require('multer')
+var storage = multer.diskStorage({
+    //public/image 폴더 안에 이미지 저장
+    destination : function(req, file, cb){
+        cb(null, './public/image')
+    },
+    filename : function(req, file, cb){
+        cb(null, file.originalname)
+    }
+});
+
+
+
 app.get('/upload', (req, res) => {
     res.render('upload.ejs')
 });
 
-app.post
+app.post()
