@@ -6,6 +6,7 @@ const MongoClient = require('mongodb').MongoClient;
 //method-override => html 에서 put 과 delete 사용가능케 해줌
 const methodOverride = require('method-override')
 require('dotenv').config()
+const {ObjectId} = require('mongodb')
 
 app.use(methodOverride('_method'))
 //ejs 파일 사용
@@ -288,18 +289,68 @@ app.use('/board/sub', checkLogin, require('./routes/board.js'))
 let multer = require('multer')
 var storage = multer.diskStorage({
     //public/image 폴더 안에 이미지 저장
-    destination : function(req, file, cb){
+    destination: function (req, file, cb) {
         cb(null, './public/image')
     },
-    filename : function(req, file, cb){
+    filename: function (req, file, cb) {
         cb(null, file.originalname)
+    },
+    filefilter: function (req, file, cb) {
+
     }
 });
 
+var upload = multer({ storage: storage });
 
 
 app.get('/upload', (req, res) => {
     res.render('upload.ejs')
 });
 
-app.post()
+//이미지업로드 기능 추가
+app.post('/upload', upload.single('profile'), function (req, res) {
+    res.send('업로드 완료')
+});
+
+//이미지 보여주기
+app.get('/image/:imageName', function (req, res) {
+    res.sendFile(__dirname + '/public/image/' + req.params.imageName)
+})
+
+//이미지ejs?
+app.get('/showImage', (req, res) => {
+    // public 폴더의 이미지 파일 목록을 조회합니다.
+    const fs = require('fs');
+    const path = require('path');
+    const imageDir = path.join(__dirname, 'public', 'image');
+
+    fs.readdir(imageDir, (err, files) => {
+        if (err) {
+            console.error('Failed to read image directory:', err);
+            return res.status(500).send('Failed to read image directory');
+        }
+
+        // 이미지 파일 목록을 전달합니다.
+        res.render('image', { images: files });
+    });
+});
+
+
+app.post('/chatroom', checkLogin, function(req, res){
+
+    var 저장할거 = {
+        title : '무슨무슨채팅방',
+        member : [ObjectId(req.body.당한사람id), req.user._id],
+        date : new Date()
+    }
+
+    db.collection('chatroom').insertOne(저장할거).then((result)=>{
+        res.send('성공')
+    })
+})
+
+
+
+app.get('/chat', (req, res) => {
+    res.render('chat.ejs')
+});
