@@ -55,15 +55,15 @@
             <div class="row">
                 <div class="col-3">
                     <ul class="list-group chat-list">
-                        <li class="list-group-item" data-id="">
-                            <h6>채팅방1</h6>
-                            <h6 class="text-small">채팅방설명</h6>
-                        </li>
-                        <li class="list-group-item">
-                            <h6>채팅방2</h6>
-                            <h6 class="text-small">채팅방설명</h6>
-                        </li>
+                        <% for (var i=0; i < data.length; i++){ %>
+                            <li class="list-group-item" data-id="<%= data[i]._id %>">
+                                <h6>Chatroom title : <%= data[i].title %>
+                                </h6>
+                                <h6 class="text-small">Chatroom Id : <%= data[i].member[0] %>
+                                </h6>
+                            </li>
                     </ul>
+                    <% } %>
                 </div>
 
                 <div class="col-9 p-0">
@@ -83,14 +83,38 @@
 
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
-            integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
-            crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
             crossorigin="anonymous"></script>
 
+        <script>
 
+            //클릭시 chat방 _id 가져옴
+            // var clickedChatId;
+            // $('.list-group-item').click(function () {
+            //     clickedChatId = this.dataset.id;
+            // })
+            $('#send').click(function(){
+                var chatContent = $('#chat-input').val();
+                var data = {
+                    parent: clickedChatId,
+                    content: chatContent,
+                }
+                $.post('/message', data).then((result) => {
+                    console.log(result)
+                })
+            })
+
+
+            var clickedChatId;
+
+            $('.list-group-item').click(function(){
+                $(this).css('background-color', '#eee');
+                clickedChatId = $(this).attr('data-id');
+            });
+
+        </script>
 </body>
 
 </html>

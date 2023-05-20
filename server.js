@@ -338,19 +338,39 @@ app.get('/showImage', (req, res) => {
 
 app.post('/chatroom', checkLogin, function(req, res){
 
-    var 저장할거 = {
+    var data = {
         title : '무슨무슨채팅방',
         member : [ObjectId(req.body.당한사람id), req.user._id],
         date : new Date()
     }
 
-    db.collection('chatroom').insertOne(저장할거).then((result)=>{
+    db.collection('chatroom').insertOne(data).then((result)=>{
         res.send('성공')
     })
 })
 
 
 
-app.get('/chat', (req, res) => {
-    res.render('chat.ejs')
+app.get('/chat', checkLogin, (req, res) => {
+
+    db.collection('chatroom').find({ member : req.user._id}).toArray().then((result)=>{
+        res.render('chat.ejs', {data : result})
+    })
+
 });
+
+
+app.post('/message', checkLogin, function(req, res){
+
+    var data = {
+        parent : req.body.parent,
+        userId : req.user._id,
+        content : req.body.content,
+        date : new Date(),
+    }
+
+    db.collection('message').insertOne(data).then((result)=>{
+        console.log(result);
+        res.send(result)
+    })
+})
