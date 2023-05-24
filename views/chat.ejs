@@ -1,4 +1,3 @@
-!
 <!doctype html>
 <html lang="en">
 
@@ -42,6 +41,7 @@
 
         .mine {
             float: right;
+            background-color: lightgreen;
         }
     </style>
 </head>
@@ -57,21 +57,17 @@
                     <ul class="list-group chat-list">
                         <% for (var i=0; i < data.length; i++){ %>
                             <li class="list-group-item" data-id="<%= data[i]._id %>">
-                                <h6>Chatroom title : <%= data[i].title %>
-                                </h6>
-                                <h6 class="text-small">Chatroom Id : <%= data[i].member[0] %>
-                                </h6>
+                                <h6>Chatroom title : <%= data[i].title %></h6>
+                                <h6 class="text-small">Chatroom Id : <%= data[i].member[0] %></h6>
                             </li>
+                        <% } %>
                     </ul>
-                    <% } %>
                 </div>
 
                 <div class="col-9 p-0">
                     <div class="chat-room">
                         <ul class="list-group chat-content">
-                            <li><span class="chat-box">채팅방1 내용</span></li>
-                            <li><span class="chat-box">채팅방1 내용</span></li>
-                            <li><span class="chat-box mine">채팅방1 내용</span></li>
+
                         </ul>
                         <div class="input-group">
                             <input class="form-control" id="chat-input">
@@ -89,29 +85,46 @@
             crossorigin="anonymous"></script>
 
         <script>
+            var clickedChatId;
+            var eventSource;
 
-            //클릭시 chat방 _id 가져옴
-            // var clickedChatId;
-            // $('.list-group-item').click(function () {
-            //     clickedChatId = this.dataset.id;
-            // })
-            $('#send').click(function(){
+
+            $('#send').click(function () {
                 var chatContent = $('#chat-input').val();
                 var data = {
                     parent: clickedChatId,
                     content: chatContent,
+                    sender: 'user'
                 }
+
                 $.post('/message', data).then((result) => {
                     console.log(result)
                 })
             })
 
-
-            var clickedChatId;
-
-            $('.list-group-item').click(function(){
+            $('.list-group-item').click(function () {
                 $(this).css('background-color', '#eee');
                 clickedChatId = $(this).attr('data-id');
+
+                // 클릭 시 HTML 비우기
+                $('.chat-content').html('');
+
+                // 소통 채널 나가기
+                if (eventSource != undefined) {
+                    eventSource.close()
+                }
+
+                // 유저가 데이터 수신
+                eventSource = new EventSource('/message/' + clickedChatId)
+                eventSource.addEventListener('test', function (e) {
+                    console.log(JSON.parse(e.data))
+                    var chatData = JSON.parse(e.data)
+                    chatData.forEach(function (i) {
+                        var messageClass = i.userId === 'user' ? 'mine' : '';
+                        console.log(i); // 전체 i 객체를 출력
+                        $('.chat-content').append('<li class="' + messageClass + '"><span class="chat-box">' + i.content + '</span></li>');
+                    })
+                })
             });
 
         </script>

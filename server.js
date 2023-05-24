@@ -6,7 +6,7 @@ const MongoClient = require('mongodb').MongoClient;
 //method-override => html 에서 put 과 delete 사용가능케 해줌
 const methodOverride = require('method-override')
 require('dotenv').config()
-const {ObjectId} = require('mongodb')
+const { ObjectId } = require('mongodb')
 
 app.use(methodOverride('_method'))
 //ejs 파일 사용
@@ -336,15 +336,15 @@ app.get('/showImage', (req, res) => {
 });
 
 
-app.post('/chatroom', checkLogin, function(req, res){
+app.post('/chatroom', checkLogin, function (req, res) {
 
     var data = {
-        title : '무슨무슨채팅방',
-        member : [ObjectId(req.body.당한사람id), req.user._id],
-        date : new Date()
+        title: '무슨무슨채팅방',
+        member: [ObjectId(req.body.당한사람id), req.user._id],
+        date: new Date()
     }
 
-    db.collection('chatroom').insertOne(data).then((result)=>{
+    db.collection('chatroom').insertOne(data).then((result) => {
         res.send('성공')
     })
 })
@@ -352,25 +352,54 @@ app.post('/chatroom', checkLogin, function(req, res){
 
 
 app.get('/chat', checkLogin, (req, res) => {
-
-    db.collection('chatroom').find({ member : req.user._id}).toArray().then((result)=>{
-        res.render('chat.ejs', {data : result})
+    db.collection('chatroom').find({ member: req.user._id }).toArray().then((result) => {
+        res.render('chat.ejs', { data: result })
     })
-
 });
 
 
-app.post('/message', checkLogin, function(req, res){
+app.post('/message', checkLogin, function (req, res) {
 
     var data = {
-        parent : req.body.parent,
-        userId : req.user._id,
-        content : req.body.content,
-        date : new Date(),
+        parent: req.body.parent,
+        userId: req.user._id,
+        content: req.body.content,
+        date: new Date(),
     }
 
-    db.collection('message').insertOne(data).then((result)=>{
+    db.collection('message').insertOne(data).then((result) => {
         console.log(result);
         res.send(result)
+    })
+})
+
+//Real-time communication between the server and users
+//GET 요청시 서버로 데이터 전송하려면? URL parameter or query string
+app.get('/message/:id', checkLogin, function (req, res) {
+
+    res.writeHead(200, {
+        "Connection": "keep-alive",
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+    });
+
+    db.collection('message').find({ parent: req.params.id }).toArray().then((result) => {
+        //유저에게 데이터 전송
+        res.write('event: test\n');
+        res.write('data: ' + JSON.stringify(result) + '\n\n');
+    })
+
+
+    //MongoDB change Stream => db가 업데이트되면 유저에게 다시 전송; DB변동시->서버에 알림-> 유저에게 전송(실시간 서비스)
+    const pipeline = [
+        //parent: req.params.id 추가/수정/사제 되면 밑의 코드 실행
+        { $match: { 'fullDocument.parent' : req.params.id} }
+    ];
+    const collection = db.collection('message');
+    const changeStream = collection.watch(pipeline);
+    changeStream.on('change', (result) => {
+        // console.log(result.fullDocument)
+        res.write('event: test\n');
+        res.write('data: ' + JSON.stringify([result.fullDocument]) + '\n\n');
     })
 })
