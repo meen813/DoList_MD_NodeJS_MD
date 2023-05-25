@@ -8,6 +8,12 @@ const methodOverride = require('method-override')
 require('dotenv').config()
 const { ObjectId } = require('mongodb')
 
+//socket setting
+const http = require('http').createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(http);
+
+
 app.use(methodOverride('_method'))
 //ejs 파일 사용
 app.set('view engine', 'ejs');
@@ -33,7 +39,7 @@ var db;
 MongoClient.connect(process.env.DB_URL, function (err, client) {
     if (err) return console.log(err)
     db = client.db('todoapp');
-    app.listen(process.env.PORT, function () {
+    http.listen(process.env.PORT, function () {
         console.log('listening on 8080')
     })
 })
@@ -393,7 +399,7 @@ app.get('/message/:id', checkLogin, function (req, res) {
     //MongoDB change Stream => db가 업데이트되면 유저에게 다시 전송; DB변동시->서버에 알림-> 유저에게 전송(실시간 서비스)
     const pipeline = [
         //parent: req.params.id 추가/수정/사제 되면 밑의 코드 실행
-        { $match: { 'fullDocument.parent' : req.params.id} }
+        { $match: { 'fullDocument.parent': req.params.id } }
     ];
     const collection = db.collection('message');
     const changeStream = collection.watch(pipeline);
@@ -403,3 +409,40 @@ app.get('/message/:id', checkLogin, function (req, res) {
         res.write('data: ' + JSON.stringify([result.fullDocument]) + '\n\n');
     })
 })
+
+
+app.get('/socket', function (요청, 응답) {
+    응답.render('socket.ejs')
+});
+
+//webSocket 접속시 서버가 뭔가 실행하고 싶다면...
+io.on('connection', function (socket) {
+    console.log('User Connected')
+
+    //room1에 메세지 전송
+    socket.on('room1-send', function(data){
+        io.to('room1').emit('broadcast', data)
+        })
+
+    //채팅방 만들고 입장; socket.join(방이름)
+    socket.on('join-room', function(data){
+    socket.join('room1');
+    })
+
+    
+
+    //'user-send'이름으로 메세지 보내면 내부 코드 실행
+    //message 수신: socket.on()
+    socket.on('user-send', function(data){
+        console.log(data);
+    //server -> user 메세지 전송 io.emit() to every users 
+    io.emit('broadcast', data)
+
+    //sever - 1 user
+    // console.log(socket.id)
+    // socket.on('user-send', function(data){
+    //     io.to(socket.id).emit('broadcast', data)
+    // })
+    })
+})
+

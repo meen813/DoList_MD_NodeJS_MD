@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="\public\main.css">
+
+    <title>Hello, world!</title>
+</head>
+
+<body>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <%- include('nav.html') %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"
+            integrity="sha512-xbQU0+iHqhVt7VIXi6vBJKPh3IQBF5B84sSHdjKiSccyX/1ZI7Vnkt2/8y8uruj63/DVmCxfUNohPNruthTEQA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+        <input id="input1">
+        <div id="content"></div>
+        <button id="send">Send a message to Sever</button>
+        <button id="room1">Enter chatroom #1</button>
+        <button id="room1-send">Send a message from Chatroom #1</button>
+
+        <!-- how to access to websocket -->
+        <script>
+            var socket = io();
+
+            $('#room1').click(function(){
+                socket.emit("join-room", 'enter chatroom')
+            });
+
+            $('#room1-send').click(function(){
+                socket.emit("room1-send", 'Send a message from chatroom1')
+            });
+
+            // user -> server socket.emit()
+            $('#send').click(function(){
+                socket.emit("user-send", $('#input1').val())
+            });
+
+            socket.on('broadcast', function(data){
+                console.log(data)
+                $('#content').append('<div>' + data + '</div>')
+            });
+
+        </script>
+
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+            crossorigin="anonymous"></script>
+
+</body>
+
+</html>
